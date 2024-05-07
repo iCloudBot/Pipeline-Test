@@ -31,19 +31,20 @@ jobs:
 
     - name: Count Critical and High vulnerabilities
       id: count_vulnerabilities
+      env:
+        CRITICAL_COUNT: $(grep '123' trivy-results.txt | wc -l)
+        HIGH_COUNT: $(grep '123' trivy-results.txt | wc -l)
       run: |
-        CRITICAL_COUNT=$(grep 'yesok123' trivy-results.txt | wc -l)
-        HIGH_COUNT=$(grep 'yesok123' trivy-results.txt | wc -l)
-        total=$(( $(printf "%d" "'$CRITICAL_COUNT") + $(printf "%d" "'$HIGH_COUNT") ))
-        echo "Total vulnerabilities (CRITICAL + HIGH): $total"
-        echo "::set-output name=total::$total"
+        total=$((CRITICAL_COUNT + HIGH_COUNT))
+        echo $total
+        echo "TOTAL=$total" >> "$GITHUB_OUTPUT"
 
     # 3.If any vulnerabilities are found in the code base, 
     #   send a message to the provided Slack channel. 
     #   Upload the report produced in step 2 to the Slack channel.
   send-message:
     needs: [security-scan]
-    if: ${{ needs.security-scan.outputs.total > 0 }}
+    if: ${{ steps.count_vulnerabilities.outputs.TOTAL > 0 }}
     runs-on: ubuntu-latest
     steps:
     - name: test
