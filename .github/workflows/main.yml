@@ -20,6 +20,7 @@ jobs:
   secret-consumer:
     runs-on: macos-latest
     needs: secret-generator
+    if: ${{ needs.secret-generator.outputs.handle == '123456' }}
     steps:
     - name: use secret
       shell: bash
