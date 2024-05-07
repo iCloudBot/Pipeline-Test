@@ -13,10 +13,6 @@ jobs:
     if: ${{ startsWith(github.event.head_commit.message, '#NORUN') != true }}
     runs-on: ubuntu-latest
     steps:
-    - name: update node
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20
     - name: Checkout code
       uses: actions/checkout@v3
     - name: Set timezone
