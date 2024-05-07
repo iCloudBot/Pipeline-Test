@@ -34,17 +34,16 @@ jobs:
     - name: Count Critical and High vulnerabilities
       id: count_vulnerabilities
       run: |
-        cat trivy-results.txt | grep Total | cut -d' ' -f2
         if grep -q -e "CRITICAL" -e "HIGH" trivy-results.txt; then
           echo "File contains"
         else
           echo "File does not contain"
         fi
-        critical_count=$(grep -c '123456' trivy-results.txt)
-        high_count=$(grep -c '123456' trivy-results.txt)
-        # total_count=$(($critical_count + $high_count))
-        # echo "total=$total_count" >> "$GITHUB_OUTPUT"
-        # echo $total_count
+        critical_count=$(grep '123456' trivy-results.txt | wc -l)
+        high_count=$(grep '123456' trivy-results.txt | wc -l)
+        total_count=$(($critical_count + $high_count))
+        echo "total=$total_count" >> "$GITHUB_OUTPUT"
+        echo $total_count
 
     # 3.If any vulnerabilities are found in the code base, 
     #   send a message to the provided Slack channel. 
