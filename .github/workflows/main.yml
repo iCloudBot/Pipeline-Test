@@ -50,7 +50,7 @@ jobs:
     #   Upload the report produced in step 2 to the Slack channel.
   send-message:
     needs: [security-scan]
-    if: ${{ needs.security-scan.outputs.total == 20 }}
+    if: ${{ needs.security-scan.outputs.total == '20' }}
     runs-on: ubuntu-latest
     steps:
     - name: test
