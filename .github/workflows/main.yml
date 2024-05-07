@@ -39,8 +39,8 @@ jobs:
         else
           echo "File does not contain"
         fi
-        critical_count=$(grep '123456' trivy-results.txt | wc -l)
-        high_count=$(grep '123456' trivy-results.txt | wc -l)
+        critical_count=$(grep 'CRITICAL' trivy-results.txt | wc -l)
+        high_count=$(grep 'HIGH' trivy-results.txt | wc -l)
         total_count=$(($critical_count + $high_count))
         echo "total=$total_count" >> "$GITHUB_OUTPUT"
         echo $total_count
@@ -50,7 +50,7 @@ jobs:
     #   Upload the report produced in step 2 to the Slack channel.
   send-message:
     needs: [security-scan]
-    if: ${{ needs.security-scan.outputs.total > 0 }}
+    if: ${{ needs.security-scan.outputs.total > 1 }}
     runs-on: ubuntu-latest
     steps:
     - name: test
