@@ -12,6 +12,8 @@ jobs:
     #   For example, the following push will not trigger your workflow
     if: ${{ startsWith(github.event.head_commit.message, '#NORUN') != true }}
     runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.generate-secret.outputs.total }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -29,18 +31,26 @@ jobs:
         output: 'trivy-results.txt'
         severity: 'CRITICAL,HIGH'
 
+    - name: Count Critical and High vulnerabilities
+      id: count_vulnerabilities
+      run: |
+        critical_count=$(grep -c 'CRITICAL' trivy-results.txt)
+        high_count=$(grep -c 'HIGH' trivy-results.txt)
+        total_count=$(($critical_count + $high_count))
+        echo "total=$total_count" >> "$GITHUB_OUTPUT"
+
     # 3.If any vulnerabilities are found in the code base, 
     #   send a message to the provided Slack channel. 
     #   Upload the report produced in step 2 to the Slack channel.
   send-message:
     needs: [security-scan]
-    # if: ${{ steps.count_vulnerabilities.outputs.FILE_CONTAINS == 'true' }}
+    if: ${{ needs.security-scan.outputs.total > 0 }}
     runs-on: ubuntu-latest
     steps:
     - name: test
       run: |
-        echo yes
-    # - name: Send GitHub Action trigger data to Slack workflow
+        echo test
+    # - name: Send message to Slack
     #   uses: rtCamp/action-slack-notify@v2
     #   env:
     #       SLACK_COLOR: '#FF0000'
@@ -49,7 +59,7 @@ jobs:
     #         Failed trivy scan, see uploaded report
     #       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-    # Upload the report file to Slack
+    # # Upload the report file to Slack
     # - uses: MeilCli/slack-upload-file@v3
     #   with:
     #     slack_token: ${{ secrets.SLACK_TOKEN }}
