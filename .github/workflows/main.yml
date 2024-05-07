@@ -1,4 +1,4 @@
-name: CICD-Workshop
+name: CICD-DEMO
 on:
   push:
     branches:
@@ -6,14 +6,14 @@ on:
       - 'v[0-9]+.[0-9]+'
 
 jobs:
-  security-scan:
+  source-code-scan:
     # 8.The pipeline should not run if the commit message starts with #NORUN even 
     #   if the branch name has the correct pattern. 
     #   For example, the following push will not trigger your workflow
     if: ${{ startsWith(github.event.head_commit.message, '#NORUN') != true }}
     runs-on: ubuntu-latest
     outputs:
-      total: ${{ steps.generate-secret.outputs.total }}
+      total: ${{ steps.count_vulnerabilities.outputs.total }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -31,32 +31,29 @@ jobs:
         output: 'trivy-results.txt'
         severity: 'CRITICAL,HIGH'
 
-    - name: Count Critical and High vulnerabilities
+    - name: count vulnerabilities
       id: count_vulnerabilities
+      shell: bash
       run: |
-        if grep -q -e "CRITICAL" -e "HIGH" trivy-results.txt; then
-          echo "File contains"
-        else
-          echo "File does not contain"
-        fi
-        SECRET_HANDLE=$(echo 123456)
-        echo "total=$SECRET_HANDLE" >> "$GITHUB_OUTPUT"
-        # critical_count=$(grep 'CRITICAL' trivy-results.txt | wc -l)
-        # high_count=$(grep 'HIGH' trivy-results.txt | wc -l)
-        # total_count=$(($critical_count + $high_count))
-        # echo "total=$total_count" >> "$GITHUB_OUTPUT"
+        critical_count=$(grep -c 'CRITICAL' trivy-results.txt || true)
+        high_count=$(grep -c 'HIGH' trivy-results.txt || true)
+        total_count=$(($critical_count + $high_count))
+        echo "total=$total_count" >> "$GITHUB_OUTPUT"
+        echo $total_count
 
-    # 3.If any vulnerabilities are found in the code base, 
-    #   send a message to the provided Slack channel. 
-    #   Upload the report produced in step 2 to the Slack channel.
-  send-message:
-    needs: [security-scan]
-    if: ${{ needs.security-scan.outputs.total == '123456' }}
+  # 3.If any vulnerabilities are found in the code base, 
+  #   send a message to the provided Slack channel. 
+  #   Upload the report produced in step 2 to the Slack channel.
+  send-message-to-slack:
+    needs: source-code-scan
+    if: ${{ needs.source-code-scan.outputs.total > 1 }}
     runs-on: ubuntu-latest
     steps:
-    - name: test
+    - name: use secret
+      shell: bash
       run: |
-        echo test
+        # SECRET_HANDLE="${{ needs.source-code-scan.outputs.handle }}"
+        echo "We retrieved our masked secret: SECRET_HANDLE"
     # - name: Send message to Slack
     #   uses: rtCamp/action-slack-notify@v2
     #   env:
@@ -74,12 +71,13 @@ jobs:
     #     file_path: 'trivy-results.txt'
     #     initial_comment: 'Scan report by Yway Chit Aung'
 
+
   # 4.If the scan produces no vulnerabilities, 
   #   then containerized the application with the Dockerfile found in the source. 
   #   You can use any image name but the image tag should be the GitHub commit hash;
   build-and-push-docker:
-    needs: [send-message]
-    if: success()
+    needs: source-code-scan
+    if: ${{ needs.source-code-scan.outputs.total < 1 }}
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
