@@ -35,13 +35,13 @@ jobs:
       id: count_vulnerabilities
       run: |
         cat trivy-results.txt | grep Total | cut -d' ' -f2
-        if grep -q -e "Critical" -e "High" trivy-results.txt; then
+        if grep -q -e "CRITICAL" -e "HIGH" trivy-results.txt; then
           echo "File contains"
         else
           echo "File does not contain"
         fi
-        # critical_count=$(grep -c '123456' trivy-results.txt)
-        # high_count=$(grep -c '123456' trivy-results.txt)
+        critical_count=$(grep -c '123456' trivy-results.txt)
+        high_count=$(grep -c '123456' trivy-results.txt)
         # total_count=$(($critical_count + $high_count))
         # echo "total=$total_count" >> "$GITHUB_OUTPUT"
         # echo $total_count
