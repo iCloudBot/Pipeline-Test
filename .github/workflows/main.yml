@@ -21,12 +21,12 @@ jobs:
       env:
         SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
       run: |
-        # echo "The selected color is $SELECTED_COLOR"
+        echo "The selected color is $SELECTED_COLOR"
         echo "::set-output name=SELECTED_COLOR::green"
 
   send-message:
     needs: [security-scan]
-    if: ${{ steps.color-selector.outputs.SELECTED_COLOR == 'green' }}
+    if: ${{ needs.security-scan.outputs.SELECTED_COLOR == 'green' }}
     runs-on: ubuntu-latest
     steps:
     - name: test
