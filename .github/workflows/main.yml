@@ -6,29 +6,25 @@ on:
       - 'main'
 
 jobs:
-  security-scan:
+  secret-generator:
     runs-on: ubuntu-latest
+    outputs:
+      handle: ${{ steps.generate-secret.outputs.handle }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Set timezone
+    - name: generate secret
+      id: generate-secret
+      shell: bash
       run: |
-        cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-    - name: Set color
-      id: color-selector
-      run: echo "SELECTED_COLOR=green" >> "$GITHUB_OUTPUT"
-    - name: Get color
-      env:
-        SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
-      run: |
-        echo "The selected color is $SELECTED_COLOR"
-        echo "::set-output name=SELECTED_COLOR::green"
-
-  send-message:
-    needs: [security-scan]
-    if: ${{ needs.security-scan.outputs.SELECTED_COLOR == 'green' }}
-    runs-on: ubuntu-latest
+        SECRET_HANDLE=$(echo 123456)
+        echo "handle=$SECRET_HANDLE" >> "$GITHUB_OUTPUT"
+  secret-consumer:
+    runs-on: macos-latest
+    needs: secret-generator
     steps:
-    - name: test
+    - name: use secret
+      shell: bash
       run: |
-        echo yes
+        SECRET_HANDLE="${{ needs.secret-generator.outputs.handle }}"
+        RETRIEVED_SECRET=$(secret-store retrieve-secret "$SECRET_HANDLE")
+        echo "::add-mask::$RETRIEVED_SECRET"
+        echo "We retrieved our masked secret: $RETRIEVED_SECRET"
