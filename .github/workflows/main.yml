@@ -35,6 +35,7 @@ jobs:
         critical_count=$(grep 'yesok' trivy-results.txt | wc -l)
         high_count=$(grep 'yesok' trivy-results.txt | wc -l)
         total=$(($critical_count + $high_count))
+        echo $total
         echo "::set-output name=total::$total"
 
     # 3.If any vulnerabilities are found in the code base, 
