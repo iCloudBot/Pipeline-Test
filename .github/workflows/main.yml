@@ -35,11 +35,12 @@ jobs:
       id: count_vulnerabilities
       run: |
         cat trivy-results.txt
-        critical_count=$(grep -c '123456' trivy-results.txt)
-        high_count=$(grep -c '123456' trivy-results.txt)
-        total_count=$(($critical_count + $high_count))
-        echo "total=$total_count" >> "$GITHUB_OUTPUT"
-        echo $total_count
+        cat trivy-results.txt | grep Total | cut -d' ' -f2
+        # critical_count=$(grep -c '123456' trivy-results.txt)
+        # high_count=$(grep -c '123456' trivy-results.txt)
+        # total_count=$(($critical_count + $high_count))
+        # echo "total=$total_count" >> "$GITHUB_OUTPUT"
+        # echo $total_count
 
     # 3.If any vulnerabilities are found in the code base, 
     #   send a message to the provided Slack channel. 
