@@ -62,7 +62,7 @@ jobs:
     - name: Set timezone
       run: |
         cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-
+      
     - name: Login to Docker Hub
       uses: docker/login-action@v1
       with:
@@ -78,20 +78,16 @@ jobs:
         tags: cleverest/test:${{ github.sha }}
 
     # 6. Digitally sign the image that you have built and push in steps 4 and 5
-    name: Install Cosign
-    steps:
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.5.0
-        with:
-          cosign-release: 'v2.2.4'
-      - name: Check install!
-        run: cosign version
-
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@v3.5.0
+      with:
+        cosign-release: 'v2.2.4'
+        
     - name: Sign image with a key
       run: |
         cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${TAGS}@${DIGEST}"
       env:
-        TAGS: cleverest/test:${{ github.sha }}
+        TAGS: docker.io/cleverest/test:${{ github.sha }}
         COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
         COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         DIGEST: ${{ steps.build-and-push.outputs.digest }}
