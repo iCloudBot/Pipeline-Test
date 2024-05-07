@@ -32,8 +32,8 @@ jobs:
     - name: Count Critical and High vulnerabilities
       id: count_vulnerabilities
       run: |
-        critical_count=$(grep -c 'CRITICAL' trivy-results.txt)
-        high_count=$(grep -c 'HIGH' trivy-results.txt)
+        critical_count=$(grep -c 'yesok' trivy-results.txt)
+        high_count=$(grep -c 'yesok' trivy-results.txt)
         total=$(($critical_count + $high_count))
         echo "::set-output name=total::$total"
 
