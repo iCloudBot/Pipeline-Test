@@ -29,13 +29,17 @@ jobs:
       id: generate-secret
       shell: bash
       run: |
-        SECRET_HANDLE=$(echo 123456)
-        echo "total=$SECRET_HANDLE" >> "$GITHUB_OUTPUT"
-
+        # SECRET_HANDLE=$(echo 123456)
+        # echo "total=$SECRET_HANDLE" >> "$GITHUB_OUTPUT"
+        critical_count=$(grep 'CRITICAL' trivy-results.txt | wc -l)
+        high_count=$(grep 'HIGH' trivy-results.txt | wc -l)
+        total_count=$(($critical_count + $high_count))
+        echo "total=$total_count" >> "$GITHUB_OUTPUT"
+        
   secret-consumer:
     runs-on: macos-latest
     needs: secret-generator
-    if: ${{ needs.secret-generator.outputs.total == '123456' }}
+    if: ${{ needs.secret-generator.outputs.total > 1 }}
     steps:
     - name: use secret
       shell: bash
