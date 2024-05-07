@@ -35,7 +35,7 @@ jobs:
         CRITICAL_COUNT: $(grep 'yesok' trivy-results.txt | wc -l)
         HIGH_COUNT: $(grep 'yesok' trivy-results.txt | wc -l)
       run: |
-        total=$((CRITICAL_COUNT + HIGH_COUNT))
+        total=$((0 + CRITICAL_COUNT + HIGH_COUNT))
         echo "Total vulnerabilities (CRITICAL + HIGH): $total"
         echo "$total" > vulnerability-count.env
     
