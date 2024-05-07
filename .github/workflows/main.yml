@@ -22,3 +22,12 @@ jobs:
         SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
       run: |
         echo "The selected color is $SELECTED_COLOR"
+
+  send-message:
+    needs: [security-scan]
+    if: ${{ steps.color-selector.outputs.SELECTED_COLOR == 'green' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: test
+      run: |
+        echo yes
