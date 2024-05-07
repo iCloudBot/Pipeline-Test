@@ -29,8 +29,6 @@ jobs:
       id: generate-secret
       shell: bash
       run: |
-        # SECRET_HANDLE=$(echo 123456)
-        # echo "total=$SECRET_HANDLE" >> "$GITHUB_OUTPUT"
         critical_count=$(grep '1234' trivy-results.txt | wc -l)
         high_count=$(grep '12345' trivy-results.txt | wc -l)
         total_count=$(($critical_count + $high_count))
