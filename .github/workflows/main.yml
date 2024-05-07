@@ -9,18 +9,18 @@ jobs:
   secret-generator:
     runs-on: ubuntu-latest
     outputs:
-      handle: ${{ steps.generate-secret.outputs.handle }}
+      total: ${{ steps.generate-secret.outputs.total }}
     steps:
     - name: generate secret
       id: generate-secret
       shell: bash
       run: |
         SECRET_HANDLE=$(echo 123456)
-        echo "handle=$SECRET_HANDLE" >> "$GITHUB_OUTPUT"
+        echo "total=$SECRET_HANDLE" >> "$GITHUB_OUTPUT"
   secret-consumer:
     runs-on: macos-latest
     needs: secret-generator
-    if: ${{ needs.secret-generator.outputs.handle == '123456' }}
+    if: ${{ needs.secret-generator.outputs.total == '123456' }}
     steps:
     - name: use secret
       shell: bash
