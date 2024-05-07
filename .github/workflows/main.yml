@@ -11,12 +11,27 @@ jobs:
     outputs:
       total: ${{ steps.generate-secret.outputs.total }}
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Set timezone
+      run: |
+        cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+    # 2.Perform a scan of the branch that triggered the workflow and generate a report in the table format
+    - name: Run Trivy vulnerability scanner in repo mode
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        ignore-unfixed: true
+        format: 'table'
+        output: 'trivy-results.txt'
+        severity: 'CRITICAL,HIGH'
     - name: generate secret
       id: generate-secret
       shell: bash
       run: |
         SECRET_HANDLE=$(echo 123456)
         echo "total=$SECRET_HANDLE" >> "$GITHUB_OUTPUT"
+
   secret-consumer:
     runs-on: macos-latest
     needs: secret-generator
@@ -27,3 +42,44 @@ jobs:
       run: |
         # SECRET_HANDLE="${{ needs.secret-generator.outputs.handle }}"
         echo "We retrieved our masked secret: SECRET_HANDLE"
+
+
+  build-and-push-docker:
+    needs: secret-generator
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Set timezone
+      run: |
+        cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # 5. After successfully building the image, push the image to your Docker Hub account.
+    - name: Push Docker Image
+      uses: docker/build-push-action@v5
+      id: build-and-push
+      with:
+        push: true
+        tags: cleverest/test:${{ github.sha }}
+
+    # 6. Digitally sign the image that you have built and push in steps 4 and 5
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@v3.5.0
+      with:
+        cosign-release: 'v2.2.4'
+
+    - name: Digitally sign the image
+      run: |
+        cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${TAGS}@${DIGEST}"
+      env:
+        TAGS: cleverest/test:${{ github.sha }}
+        COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        DIGEST: ${{ steps.build-and-push.outputs.digest }}
