@@ -63,10 +63,6 @@ jobs:
       run: |
         cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-    - name: Build an image from Dockerfile
-      run: |
-        docker build -t docker.io/cleverest/test:${{ github.sha }} .
-      
     - name: Login to Docker Hub
       uses: docker/login-action@v1
       with:
@@ -75,20 +71,27 @@ jobs:
 
     # 5. After successfully building the image, push the image to your Docker Hub account.
     - name: Push Docker Image
-      run: |
-        docker push docker.io/cleverest/test:${{ github.sha }}
+      uses: docker/build-push-action@v5
+      id: build-and-push
+      with:
+        push: true
+        tags: cleverest/test:${{ github.sha }}
 
     # 6. Digitally sign the image that you have built and push in steps 4 and 5
-    - name: Install cosign
-      uses: sigstore/cosign-installer@2.2.0
-      with:
-        cosign-release: 'v2.2.0'
-        
+    name: Install Cosign
+    steps:
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+        with:
+          cosign-release: 'v2.2.4'
+      - name: Check install!
+        run: cosign version
+
     - name: Sign image with a key
       run: |
         cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${TAGS}@${DIGEST}"
       env:
-        TAGS: docker.io/cleverest/test:${{ github.sha }}
+        TAGS: cleverest/test:${{ github.sha }}
         COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
         COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         DIGEST: ${{ steps.build-and-push.outputs.digest }}
