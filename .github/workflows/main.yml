@@ -32,11 +32,10 @@ jobs:
     - name: Count Critical and High vulnerabilities
       id: count_vulnerabilities
       run: |
-        critical_count=$(grep -c 'yesok' trivy-results.txt)
-        high_count=$(grep -c 'yesok' trivy-results.txt)
+        critical_count=$(grep 'yesok' trivy-results.txt | wc -l)
+        high_count=$(grep 'yesok' trivy-results.txt | wc -l)
         total=$(($critical_count + $high_count))
         echo "::set-output name=total::$total"
-        shell: /usr/bin/bash -e {0}
 
     # 3.If any vulnerabilities are found in the code base, 
     #   send a message to the provided Slack channel. 
