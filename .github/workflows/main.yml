@@ -32,18 +32,12 @@ jobs:
     - name: Count Critical and High vulnerabilities
       id: count_vulnerabilities
       env:
-        CRITICAL_COUNT: $(grep 'yesok' trivy-results.txt | wc -l)
-        HIGH_COUNT: $(grep 'yesok' trivy-results.txt | wc -l)
+        CRITICAL_COUNT: $(grep 'yesok123' trivy-results.txt | wc -l)
+        HIGH_COUNT: $(grep 'yesok123' trivy-results.txt | wc -l)
       run: |
         total=$(( $(printf "%d" "'$CRITICAL_COUNT") + $(printf "%d" "'$HIGH_COUNT") ))
         echo "Total vulnerabilities (CRITICAL + HIGH): $total"
-        echo "$total" > vulnerability-count.env
-    
-    - name: Upload environment file
-      uses: actions/upload-artifact@v3
-      with:
-        name: vulnerability-count-env
-        path: vulnerability-count.env
+        echo "::set-output name=total::$TOTAL"
 
     # 3.If any vulnerabilities are found in the code base, 
     #   send a message to the provided Slack channel. 
