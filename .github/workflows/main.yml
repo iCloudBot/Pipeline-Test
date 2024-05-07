@@ -1,10 +1,8 @@
 name: Security Scan and Docker Build
-
 on:
   push:
     branches:
-      - main
-      # - 'release/v[1-9]+\\.[0-9]+'
+      - 'release/v[1-9]+\\.[0-9]+'
 
 # env:
 #   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -24,18 +22,17 @@ jobs:
       with:
         scan-type: 'fs'
         ignore-unfixed: true
-        # scan-ref: '.'
         format: 'table'
-        output: 'trivy-results.table'
+        output: 'trivy-results.txt'
         severity: 'CRITICAL,HIGH'
 
-    - name: Run Trivy Scan
-      run: cat trivy-results.table
+    - name: Print Trivy Scan
+      run: cat trivy-results.txt
 
-    # - name: Upload Trivy scan results to GitHub Security tab
-    #   uses: github/codeql-action/upload-table@v2
-    #   with:
-    #     table_file: 'trivy-results.table'
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-table@v2
+      with:
+        table_file: 'trivy-results.txt'
 
   build-and-push-docker:
     needs: [security-scan]
