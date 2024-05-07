@@ -1,16 +1,16 @@
-# syntax=docker/dockerfile:1.4
-FROM golang:1.22
+FROM nginx:stable-alpine-slim as base
 
-# related to https://github.com/golangci/golangci-lint/issues/3107
-ENV GOROOT /usr/local/go
+RUN apk upgrade --no-cache && \
+    apk add libcap tzdata curl --no-cache && \
+    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime  && \
+    sed -i '/default_type/a\    server_tokens off;' /etc/nginx/nginx.conf && \
+    setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx && \
+    chown nginx:nginx /var/cache/nginx /var/run
 
-# Allow to download a more recent version of Go.
-# https://go.dev/doc/toolchain
-# GOTOOLCHAIN=auto is shorthand for GOTOOLCHAIN=local+auto
-ENV GOTOOLCHAIN auto
+FROM scratch
+COPY --from=base / /
+WORKDIR /usr/share/nginx/html
+ENV NGINX_VERSION=1.24.0
+# USER nginx
 
-# Set all directories as safe
-RUN git config --global --add safe.directory '*'
-
-COPY golangci-lint /usr/bin/
-CMD ["golangci-lint"]
+CMD ["nginx", "-g", "daemon off;"]
