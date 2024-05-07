@@ -1,4 +1,4 @@
-name: CI-CD-Workshop
+name: CICD-Workshop
 on:
   push:
     branches:
@@ -29,9 +29,25 @@ jobs:
         output: 'trivy-results.txt'
         severity: 'CRITICAL,HIGH'
 
+    - name: Count Critical and High vulnerabilities
+      id: count_vulnerabilities
+      run: |
+        critical_count=$(grep -c 'CRITICAL' trivy-results.txt)
+        high_count=$(grep -c 'HIGH' trivy-results.txt)
+        total=$(($critical_count + $high_count))
+        echo "::set-output name=total::$total"
+
     # 3.If any vulnerabilities are found in the code base, 
     #   send a message to the provided Slack channel. 
     #   Upload the report produced in step 2 to the Slack channel.
+  send-message:
+    needs: [security-scan]
+    if: ${{ needs.security-scan.outputs.total > 0 }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: test
+      run: |
+        echo yes
     # - name: Send GitHub Action trigger data to Slack workflow
     #   uses: rtCamp/action-slack-notify@v2
     #   env:
@@ -41,7 +57,7 @@ jobs:
     #         Failed trivy scan, see uploaded report
     #       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-    # # Upload the report file to Slack
+    # Upload the report file to Slack
     # - uses: MeilCli/slack-upload-file@v3
     #   with:
     #     slack_token: ${{ secrets.SLACK_TOKEN }}
@@ -53,7 +69,7 @@ jobs:
   #   then containerized the application with the Dockerfile found in the source. 
   #   You can use any image name but the image tag should be the GitHub commit hash;
   build-and-push-docker:
-    needs: [security-scan]
+    needs: [send-message]
     if: success()
     runs-on: ubuntu-latest
     steps:
@@ -62,7 +78,7 @@ jobs:
     - name: Set timezone
       run: |
         cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-      
+
     - name: Login to Docker Hub
       uses: docker/login-action@v1
       with:
@@ -82,12 +98,12 @@ jobs:
       uses: sigstore/cosign-installer@v3.5.0
       with:
         cosign-release: 'v2.2.4'
-        
-    - name: Sign image with a key
+
+    - name: Digitally sign the image
       run: |
         cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${TAGS}@${DIGEST}"
       env:
-        TAGS: docker.io/cleverest/test:${{ github.sha }}
+        TAGS: cleverest/test:${{ github.sha }}
         COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
         COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         DIGEST: ${{ steps.build-and-push.outputs.digest }}
