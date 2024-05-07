@@ -31,8 +31,8 @@ jobs:
       run: |
         critical_count=$(grep '1234' trivy-results.txt | wc -l)
         high_count=$(grep '12345' trivy-results.txt | wc -l)
-        total_count=$(($critical_count + $high_count))
-        echo "total=$total_count" >> "$GITHUB_OUTPUT"
+        # total_count=$(($critical_count + $high_count))
+        # echo "total=$total_count" >> "$GITHUB_OUTPUT"
         
   secret-consumer:
     runs-on: macos-latest
